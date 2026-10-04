@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
 import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
+import '../../core/widgets/paper_card.dart';
 import '../../core/widgets/3d/tactile_pusher_button_3d.dart';
 import '../../core/widgets/3d/tactile_timer_chassis_3d.dart';
 
@@ -66,23 +67,27 @@ class _DryFireParScreenState extends State<DryFireParScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.paper),
+          icon: Icon(Icons.arrow_back, color: tokens.text),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Dry-Fire Par Timer', style: TextStyle(color: AppColors.paper)),
+        title: Text(
+          'Dry-fire par timer',
+          style: tokens.body(color: tokens.text, size: 17, weight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Column(
             children: [
-              // 3D Chassis Display
+              // The timer, in its chassis.
               TactileTimerChassis3D(
                 child: BacklitLcdDisplay3D(
                   timeSec: _elapsedTimeSec,
@@ -96,35 +101,33 @@ class _DryFireParScreenState extends State<DryFireParScreen> {
               const SizedBox(height: 24),
 
               // Par Time Selector Slider
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.blackCard,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.olive.withAlpha(70)),
-                ),
+              PaperCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Target Par Time',
-                          style: TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontSize: 15),
+                        Expanded(
+                          child: Text(
+                            'TARGET PAR TIME',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: tokens.label(color: tokens.text),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${_parTimeSec.toStringAsFixed(2)}s',
-                          style: const TextStyle(color: AppColors.blazeBright, fontWeight: FontWeight.bold, fontSize: 18, fontFamily: 'monospace'),
+                          style: tokens.readout(
+                              color: tokens.primary, size: 19),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: AppColors.blaze,
-                        inactiveTrackColor: AppColors.blackSurface,
-                        thumbColor: AppColors.blazeBright,
+                        activeTrackColor: tokens.primary,
+                        inactiveTrackColor: tokens.grid,
+                        thumbColor: tokens.primary,
                       ),
                       child: Slider(
                         value: _parTimeSec,
@@ -134,9 +137,10 @@ class _DryFireParScreenState extends State<DryFireParScreen> {
                         onChanged: (val) => setState(() => _parTimeSec = val),
                       ),
                     ),
-                    const Text(
-                      'Start Beep -> Par Beep interval for draw & reload dry-fire reps.',
-                      style: TextStyle(color: AppColors.paperMuted, fontSize: 12),
+                    Text(
+                      'The gap between the start beep and the par beep, for '
+                      'draw-and-reload dry-fire repetitions.',
+                      style: tokens.body(color: tokens.textMuted, size: 12),
                     ),
                   ],
                 ),
@@ -147,10 +151,13 @@ class _DryFireParScreenState extends State<DryFireParScreen> {
               // Start Par Sequence Pusher
               TactilePusherButton3D(
                 onPressed: _startParSequence,
-                label: _isArmed ? 'ARMED • STANDBY' : (_isRunning ? 'RUNNING PAR...' : 'START PAR BEEP'),
+                label: _isArmed
+                    ? 'ARMED — STANDBY'
+                    : (_isRunning ? 'RUNNING PAR…' : 'START PAR BEEP'),
                 icon: Icons.play_arrow,
-                backgroundColor: _isArmed ? AppColors.blazeDim : AppColors.blaze,
-                height: 68,
+                backgroundColor: _isArmed ? tokens.accent : tokens.primary,
+                textColor: tokens.onPrimary,
+                height: 62,
               ),
 
               const SizedBox(height: 14),

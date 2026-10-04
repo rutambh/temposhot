@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/field_notebook_theme.dart';
 
+/// Live input envelope, drawn the way a seismograph trace is drawn on paper:
+/// ink blue trace, olive threshold rule, faint dot-grid ruling behind it.
 class AudioEnvelopeOscilloscope3D extends StatelessWidget {
   final List<double> waveSamples;
   final double threshold;
@@ -16,25 +18,22 @@ class AudioEnvelopeOscilloscope3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.lcdBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.olive.withAlpha(90), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(180),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: tokens.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: CustomPaint(
         painter: _OscilloscopePainter(
           samples: waveSamples,
           threshold: threshold,
+          grid: tokens.grid,
+          trace: tokens.primary,
+          thresholdColor: tokens.accent,
         ),
       ),
     );
@@ -44,36 +43,39 @@ class AudioEnvelopeOscilloscope3D extends StatelessWidget {
 class _OscilloscopePainter extends CustomPainter {
   final List<double> samples;
   final double threshold;
+  final Color grid;
+  final Color trace;
+  final Color thresholdColor;
 
   _OscilloscopePainter({
     required this.samples,
     required this.threshold,
+    required this.grid,
+    required this.trace,
+    required this.thresholdColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Grid Background
+    // 1. Ruling. Only horizontals, so it reads as a chart and not as graph paper.
     final gridPaint = Paint()
-      ..color = AppColors.olive.withAlpha(35)
+      ..color = grid.withValues(alpha: 0.55)
       ..strokeWidth = 1.0;
 
-    for (double x = 0; x < size.width; x += 25) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y < size.height; y += 20) {
+    for (double y = size.height * 0.25; y < size.height; y += size.height * 0.25) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // 2. Sensitivity Threshold Line
+    // 2. Sensitivity threshold rule.
     final threshY = size.height * (1.0 - threshold.clamp(0.1, 0.95));
     final threshPaint = Paint()
-      ..color = AppColors.blazeBright.withAlpha(180)
-      ..strokeWidth = 1.5
+      ..color = thresholdColor.withValues(alpha: 0.85)
+      ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
 
     canvas.drawLine(Offset(0, threshY), Offset(size.width, threshY), threshPaint);
 
-    // 3. Audio Waveform
+    // 3. Audio envelope.
     if (samples.isNotEmpty) {
       final wavePath = Path();
       final dx = size.width / math.max(samples.length - 1, 1);
@@ -90,25 +92,21 @@ class _OscilloscopePainter extends CustomPainter {
         }
       }
 
-      final waveGlowPaint = Paint()
-        ..color = AppColors.lcdGreenText.withAlpha(100)
-        ..strokeWidth = 4.0
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
-
-      final waveLinePaint = Paint()
-        ..color = AppColors.lcdGreenText
+      final wavePaint = Paint()
+        ..color = trace
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
 
-      canvas.drawPath(wavePath, waveGlowPaint);
-      canvas.drawPath(wavePath, waveLinePaint);
+      canvas.drawPath(wavePath, wavePaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _OscilloscopePainter oldDelegate) {
-    return oldDelegate.samples != samples || oldDelegate.threshold != threshold;
+    return oldDelegate.samples != samples ||
+        oldDelegate.threshold != threshold ||
+        oldDelegate.trace != trace;
   }
 }

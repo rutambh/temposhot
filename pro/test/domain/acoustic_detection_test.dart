@@ -110,6 +110,7 @@ void main() {
 
     test('an available source can start and stop', () async {
       final source = SimulatedAudioCaptureSource();
+      addTearDown(source.dispose);
       expect(source.isAvailable, isTrue);
       await source.start();
       expect(source.isCapturing, isTrue);
@@ -117,6 +118,49 @@ void main() {
       expect(sample.amplitude, inInclusiveRange(0.0, 1.0));
       await source.stop();
       expect(source.isCapturing, isFalse);
+    });
+
+    // The live timer subscribes first and starts second. Creating the output
+    // stream inside start() meant that order silently delivered no audio.
+    test('a listener that subscribes before start() still receives samples',
+        () async {
+      final source = SimulatedAudioCaptureSource();
+      addTearDown(source.dispose);
+
+      final received = <double>[];
+      final sub = source.samples.listen((s) => received.add(s.amplitude));
+
+      await source.start();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+
+      expect(received, isNotEmpty,
+          reason: 'subscribing before start() must not silently lose audio');
+      expect(received.every((a) => a >= 0.0 && a <= 1.0), isTrue);
+
+      await sub.cancel();
+    });
+
+    test('the simulated sampler stops ticking once the source is stopped',
+        () async {
+      // Regression: the 20ms sampler used to keep running after stop(), so a
+      // periodic timer outlived the screen that owned it.
+      final source = SimulatedAudioCaptureSource();
+      addTearDown(source.dispose);
+      final seen = <double>[];
+      final sub = source.samples.listen((s) => seen.add(s.amplitude));
+
+      await source.start();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      final before = seen.length;
+      expect(before, greaterThan(0),
+          reason: 'precondition: the sampler must actually be emitting');
+
+      await source.stop();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(seen.length, before,
+          reason: 'no sample may arrive after stop() returns');
+
+      await sub.cancel();
     });
   });
 

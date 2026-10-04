@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
 import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
 import '../../core/widgets/3d/tactile_pusher_button_3d.dart';
 import '../../core/widgets/3d/tactile_timer_chassis_3d.dart';
+import '../../core/widgets/paper_card.dart';
 import '../dryfire/dryfire_par_screen.dart';
 import '../history/history_screen.dart';
 import '../live/live_timer_screen.dart';
@@ -24,30 +25,45 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     final stringCountAsync = ref.watch(stringCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      // Transparent so the app shell's dot-grid paper reads through.
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 20,
         title: Row(
           children: [
             Container(
               width: 10,
               height: 10,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.blaze,
+                color: tokens.primary,
               ),
             ),
             const SizedBox(width: 8),
-            const Text('TempoShot', style: TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold)),
+            Flexible(
+              child: Text(
+                'TempoShot',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: tokens.text,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 19,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, color: AppColors.paper),
+            icon: Icon(Icons.history, color: tokens.text),
             tooltip: 'String History',
             onPressed: () {
               Navigator.of(context).push(
@@ -56,12 +72,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline, color: AppColors.paper),
+            icon: Icon(Icons.info_outline, color: tokens.text),
             tooltip: 'Safety Notice',
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (_) => SportsDisclaimerDialog(onAccept: () => Navigator.of(context).pop()),
+                builder: (_) => SportsDisclaimerDialog(
+                    onAccept: () => Navigator.of(context).pop()),
               );
             },
           ),
@@ -69,9 +86,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
           children: [
-            // 3D Skeuomorphic Chrono Timer Chassis Hero
+            // The timer itself: chassis, readout panel, envelope trace.
             TactileTimerChassis3D(
               child: Column(
                 children: [
@@ -82,19 +99,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     isArmed: false,
                     isRunning: false,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.shield_outlined, color: AppColors.oliveLight, size: 16),
+                      Icon(Icons.shield_outlined, color: tokens.accent, size: 15),
                       const SizedBox(width: 6),
-                      Text(
-                        'PRACTICE READY • USPSA / IDPA',
-                        style: TextStyle(
-                          color: AppColors.oliveLight.withAlpha(200),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
+                      Flexible(
+                        child: Text(
+                          'PRACTICE READY — USPSA / IDPA',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tokens.label(color: tokens.accent, size: 10),
                         ),
                       ),
                     ],
@@ -103,9 +118,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
-            // Big 3D Tactile Pushers Row
             TactilePusherButton3D(
               onPressed: () {
                 Navigator.of(context).push(
@@ -116,12 +130,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               },
               label: 'START LIVE-FIRE TIMER',
               icon: Icons.timer,
-              backgroundColor: AppColors.blaze,
-              textColor: Colors.white,
-              height: 66,
+              backgroundColor: tokens.primary,
+              textColor: tokens.onPrimary,
+              height: 62,
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
             TactilePusherButton3D(
               onPressed: () {
@@ -131,43 +145,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               },
               label: 'START DRY-FIRE PAR',
               icon: Icons.flash_on,
-              backgroundColor: AppColors.olive,
-              textColor: AppColors.paper,
-              height: 60,
+              backgroundColor: tokens.accent,
+              textColor: tokens.onPrimary,
+              height: 56,
+              fontSize: 15,
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
-            // Sensitivity Threshold Slider
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.blackCard,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.olive.withAlpha(60)),
-              ),
+            PaperCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Mic Sensitivity Threshold',
-                        style: TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontSize: 14),
+                      Expanded(
+                        child: Text(
+                          'MIC SENSITIVITY THRESHOLD',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tokens.label(color: tokens.text),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '${(_sensitivity * 100).toInt()}%',
-                        style: const TextStyle(color: AppColors.blazeBright, fontWeight: FontWeight.bold, fontSize: 14),
+                        style: tokens.readout(
+                          color: tokens.primary,
+                          size: 17,
+                          weight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.blaze,
-                      inactiveTrackColor: AppColors.blackSurface,
-                      thumbColor: AppColors.blazeBright,
+                      activeTrackColor: tokens.primary,
+                      inactiveTrackColor: tokens.grid,
+                      thumbColor: tokens.primary,
                     ),
                     child: Slider(
                       value: _sensitivity,
@@ -177,40 +192,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onChanged: (val) => setState(() => _sensitivity = val),
                     ),
                   ),
-                  const Text(
-                    'Adjust to filter out brass echoes or indoor range neighbor gunshots.',
-                    style: TextStyle(color: AppColors.paperMuted, fontSize: 12),
+                  Text(
+                    'Raise this to filter brass echoes and neighbouring '
+                    'range gunfire. Lower it if quiet strings are not being '
+                    'detected.',
+                    style: tokens.body(color: tokens.textMuted, size: 12),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
-            // Recent Strings & Lite Gating Counter
             stringCountAsync.when(
-              data: (count) => Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.blackCardHigh,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.olive.withAlpha(80)),
-                ),
+              data: (count) => PaperCard(
+                padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.storage, color: AppColors.blaze, size: 26),
+                    Icon(Icons.storage, color: tokens.primary, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Lite Storage: $count / ${AppConstants.liteMaxStrings} Strings',
-                            style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontSize: 14),
+                            'Lite storage: $count / ${AppConstants.liteMaxStrings} strings',
+                            maxLines: 2,
+                            style: tokens.body(
+                              color: tokens.text,
+                              size: 13,
+                              weight: FontWeight.w700,
+                            ),
                           ),
-                          const Text(
-                            'Upgrade to Pro for unlimited drill strings & PDF export.',
-                            style: TextStyle(color: AppColors.paperMuted, fontSize: 12),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Pro adds unlimited strings and PDF export.',
+                            style: tokens.body(color: tokens.textMuted, size: 12),
                           ),
                         ],
                       ),
@@ -221,16 +238,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           MaterialPageRoute(builder: (_) => const ProPaywallScreen()),
                         );
                       },
-                      child: const Text('Pro', style: TextStyle(color: AppColors.blazeBright, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Pro',
+                        style: TextStyle(
+                          color: tokens.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              loading: () => const SizedBox(),
-              error: (_, __) => const SizedBox(),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
             ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),

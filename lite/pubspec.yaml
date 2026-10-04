@@ -29,3 +29,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Bundled, never fetched at runtime: the app keeps a strict zero-network
+  # guarantee, so google_fonts style runtime fetching is not an option.
+  fonts:
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader.ttf
+    - family: PublicSans
+      fonts:
+        - asset: assets/fonts/PublicSans.ttf

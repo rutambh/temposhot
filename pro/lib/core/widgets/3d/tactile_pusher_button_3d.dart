@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// The primary action control.
+///
+/// Keeps the original tactile behaviour -- it physically depresses and its
+/// shadow collapses -- but the finish is now flat ink on paper rather than the
+/// old moulded-plastic gradient, which is what made it read as skeuomorphic
+/// next to the notebook surfaces.
 class TactilePusherButton3D extends StatefulWidget {
   final VoidCallback onPressed;
   final String label;
@@ -27,10 +33,12 @@ class TactilePusherButton3D extends StatefulWidget {
 class _TactilePusherButton3DState extends State<TactilePusherButton3D> {
   bool _isPressed = false;
 
+  static const double _travel = 4.0;
+  static const Duration _duration = Duration(milliseconds: 70);
+
   @override
   Widget build(BuildContext context) {
-    const double unpressedDepth = 6.0;
-    final double depth = _isPressed ? 1.5 : unpressedDepth;
+    final depth = _isPressed ? 0.0 : _travel;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -40,73 +48,53 @@ class _TactilePusherButton3DState extends State<TactilePusherButton3D> {
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 60),
+        duration: _duration,
         height: widget.height,
-        transform: Matrix4.translationValues(0, _isPressed ? (unpressedDepth - 1.5) : 0, 0),
+        transform: Matrix4.translationValues(0, _isPressed ? _travel : 0, 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              widget.backgroundColor,
-              Color.lerp(widget.backgroundColor, Colors.black, 0.35)!,
-            ],
-          ),
+          borderRadius: BorderRadius.circular(12),
+          color: widget.backgroundColor,
           border: Border.all(
-            color: Colors.white.withAlpha(_isPressed ? 30 : 80),
-            width: 1.5,
+            color: widget.backgroundColor.withValues(alpha: 0.0),
           ),
-          boxShadow: _isPressed
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(150),
-                    blurRadius: 2,
-                    offset: const Offset(0, 1.5),
-                  ),
-                ]
-              : [
-                  // 3D Extrusion Bottom
-                  BoxShadow(
-                    color: Color.lerp(widget.backgroundColor, Colors.black, 0.75)!,
-                    blurRadius: 0,
-                    offset: Offset(0, depth),
-                  ),
-                  // Ambient Floor Drop Shadow
-                  BoxShadow(
-                    color: Colors.black.withAlpha(180),
-                    blurRadius: 14,
-                    offset: const Offset(0, 8),
-                  ),
-                  // Top Specular Highlight
-                  BoxShadow(
-                    color: Colors.white.withAlpha(20),
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
+          boxShadow: [
+            // Solid extrusion: the same hue, darkened, so the button looks
+            // pressed into the page rather than floating on it.
+            BoxShadow(
+              color: Color.lerp(widget.backgroundColor, Colors.black, 0.45)!
+                  .withValues(alpha: _isPressed ? 0.0 : 1.0),
+              blurRadius: 0,
+              offset: Offset(0, depth + 3),
+            ),
+          ],
         ),
         child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: 26, color: widget.textColor),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: Text(
-                  widget.label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: widget.textColor,
-                    fontSize: widget.fontSize,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 22, color: widget.textColor),
+                  const SizedBox(width: 8),
+                ],
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: widget.fontSize,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

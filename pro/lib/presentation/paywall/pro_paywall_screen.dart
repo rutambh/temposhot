@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
+import '../../core/widgets/paper_card.dart';
 
 class ProPaywallScreen extends StatelessWidget {
   const ProPaywallScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.paper),
+          icon: Icon(Icons.arrow_back, color: tokens.text),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Upgrade to TempoShot Pro', style: TextStyle(color: AppColors.paper)),
+        title: Text('Upgrade to TempoShot Pro', style: TextStyle(color: tokens.text)),
       ),
       body: SafeArea(
         child: ListView(
@@ -29,51 +31,53 @@ class ProPaywallScreen extends StatelessWidget {
                 height: 72,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.blaze.withAlpha(30),
-                  border: Border.all(color: AppColors.blaze, width: 2),
+                  color: tokens.primary.withAlpha(30),
+                  border: Border.all(color: tokens.primary, width: 2),
                 ),
-                child: const Icon(Icons.timer_outlined, color: AppColors.blaze, size: 40),
+                child: Icon(Icons.timer_outlined, color: tokens.primary, size: 40),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Unlock Match-Grade Shot Timing',
+            Text(
+              'Unlock match-grade shot timing',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.paper,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: tokens.body(
+                  color: tokens.text, size: 22, weight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'One-time purchase • 100% Offline • Lifetime Access',
+            Text(
+              'One-time purchase • 100% offline • lifetime access',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.paperMuted, fontSize: 13),
+              style: tokens.body(color: tokens.textMuted, size: 13),
             ),
             const SizedBox(height: 24),
 
             _buildFeatureTile(
+              tokens,
               icon: Icons.all_inclusive,
               title: 'Unlimited Practice Strings',
               subtitle: 'Store your entire training history without 10-string Lite limit.',
             ),
             _buildFeatureTile(
+              tokens,
               icon: Icons.fitness_center,
               title: 'Full Match Drill Library',
               subtitle: 'Create unlimited custom drills, par stages, and multiple shooter profiles.',
             ),
             _buildFeatureTile(
+              tokens,
               icon: Icons.graphic_eq,
               title: 'Calibrated Gun Sensitivity Profiles',
               subtitle: 'Pre-calibrated thresholds for .22 LR, 9mm, PCC, and 12 Gauge Shotgun.',
             ),
             _buildFeatureTile(
+              tokens,
               icon: Icons.picture_as_pdf_outlined,
               title: 'Printable Range Scorecard PDF',
               subtitle: 'Export clean PDF drill cards with split trend histograms.',
             ),
             _buildFeatureTile(
+              tokens,
               icon: Icons.share,
               title: 'CSV Match Export',
               subtitle: 'Full split-by-split timestamps for Squad Locker and Excel.',
@@ -90,10 +94,10 @@ class ProPaywallScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blaze,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 4,
+                  backgroundColor: tokens.primary,
+                  foregroundColor: tokens.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
                 onPressed: () async {
                   final uri = Uri.parse(AppConstants.playStoreUrl);
@@ -104,10 +108,10 @@ class ProPaywallScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Package: com.rutambh.temposhot.pro',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.oliveLight, fontSize: 12),
+              style: TextStyle(color: tokens.textMuted, fontSize: 12),
             ),
             const SizedBox(height: 20),
           ],
@@ -116,56 +120,47 @@ class ProPaywallScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureTile({
+  Widget _buildFeatureTile(
+    FieldNotebookTokens tokens, {
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.blackCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.olive.withAlpha(60)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.blackSurface,
-              borderRadius: BorderRadius.circular(10),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: PaperCard(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: tokens.background,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: tokens.primary, size: 22),
             ),
-            child: Icon(icon, color: AppColors.blaze, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.paper,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: tokens.body(
+                        color: tokens.text, size: 15, weight: FontWeight.w700),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.paperMuted,
-                    fontSize: 13,
-                    height: 1.3,
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: tokens.body(color: tokens.textMuted, size: 13),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

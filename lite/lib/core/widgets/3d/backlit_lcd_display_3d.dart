@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/field_notebook_theme.dart';
 
+/// The readout panel: a hairline-bordered inset on raised paper, with the
+/// serif Newsreader digits the Field Notebook style calls for.
+///
+/// Class name kept from the old skeuomorphic build so the two call sites and
+/// their test do not churn; the treatment itself is now paper, not glass.
 class BacklitLcdDisplay3D extends StatelessWidget {
   final double timeSec;
   final int shotCount;
@@ -19,189 +24,110 @@ class BacklitLcdDisplay3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     final timeFormatted = timeSec.toStringAsFixed(2).padLeft(5, '0');
+    // One colour per state, so "armed" reads instantly at a glance.
+    final stateColor =
+        isArmed ? tokens.accent : (isRunning ? tokens.success : tokens.primary);
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.lcdBackground,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.olive.withAlpha(120),
-          width: 2.0,
-        ),
-        boxShadow: [
-          // Inner Recessed Display Shadow
-          BoxShadow(
-            color: Colors.black.withAlpha(220),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tokens.border),
       ),
-      child: Stack(
+      child: Column(
         children: [
-          Column(
+          // Status line: what the timer is doing, written as a field label.
+          Row(
             children: [
-              // Top Status Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isArmed
-                              ? AppColors.blazeBright
-                              : (isRunning ? AppColors.lcdGreenText : AppColors.olive),
-                          boxShadow: [
-                            if (isArmed || isRunning)
-                              BoxShadow(
-                                color: (isArmed ? AppColors.blazeBright : AppColors.lcdGreenText).withAlpha(180),
-                                blurRadius: 8,
-                              ),
-                          ],
-                        ),
+              Flexible(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: stateColor,
                       ),
-                      const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            isArmed ? 'ARMED (STANDBY)' : (isRunning ? 'LIVE TIMER' : 'READY'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: isArmed ? AppColors.blazeBright : AppColors.paperMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
+                    const SizedBox(width: 6),
+                    Flexible(
                       child: Text(
-                        'SHOTS: $shotCount',
-                        style: const TextStyle(
-                          color: AppColors.paper,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'monospace',
-                        ),
+                        isArmed
+                            ? 'ARMED (STANDBY)'
+                            : (isRunning ? 'LIVE TIMER' : 'READY'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: tokens.label(color: stateColor),
                       ),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // Giant 80sp 3D Chrono Digits
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  timeFormatted,
-                  style: TextStyle(
-                    color: isArmed ? AppColors.blazeBright : AppColors.paper,
-                    fontSize: 76,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4.0,
-                    fontFamily: 'monospace',
-                    shadows: [
-                      Shadow(
-                        color: (isArmed ? AppColors.blazeBright : Colors.white).withAlpha(60),
-                        blurRadius: 18,
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Bottom Split Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.lcdAmberText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                      ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'SHOTS: $shotCount',
+                    style: tokens.readout(
+                      color: tokens.text,
+                      size: 15,
+                      weight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Flexible(
-                    child: Text(
-                      '100% OFFLINE DSP',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: AppColors.oliveLight,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
 
-          // Glass Glare Overlay
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _GlassSpecularGlarePainter(),
-              ),
+          const SizedBox(height: 6),
+          Divider(color: tokens.border, height: 13),
+
+          // The number. FittedBox keeps it on one line at 320dp and below.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              timeFormatted,
+              style: tokens.readout(color: stateColor, size: 72, weight: FontWeight.w500),
             ),
+          ),
+
+          const SizedBox(height: 6),
+          Divider(color: tokens.border, height: 13),
+
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: tokens.readout(
+                    color: tokens.warning,
+                    size: 14,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '100% OFFLINE DSP',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: tokens.label(color: tokens.textMuted, size: 10),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-}
-
-class _GlassSpecularGlarePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final glarePath = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width * 0.45, 0)
-      ..lineTo(size.width * 0.15, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    final glarePaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withAlpha(18),
-          Colors.white.withAlpha(4),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    canvas.drawPath(glarePath, glarePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

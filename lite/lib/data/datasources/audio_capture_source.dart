@@ -93,7 +93,16 @@ class SimulatedAudioCaptureSource implements AudioCaptureSource {
   final Duration interval;
   final double ambientLevel;
   int _tick = 0;
-  StreamController<AudioSample>? _controller;
+
+  /// Long-lived and created eagerly, so [samples] is the same stream object
+  /// before and after [start]. Building it inside start() meant a listener
+  /// that subscribed first -- which is what the live timer does -- was stuck
+  /// on a dead `Stream.empty()` and detected nothing.
+  final StreamController<AudioSample> _controller =
+      StreamController<AudioSample>.broadcast();
+
+  Timer? _timer;
+  bool _disposed = false;
 
   SimulatedAudioCaptureSource({
     this.interval = const Duration(milliseconds: 20),
@@ -107,26 +116,20 @@ class SimulatedAudioCaptureSource implements AudioCaptureSource {
   String? get unavailableReason => null;
 
   @override
-  bool get isCapturing => _controller != null && !_controller!.isClosed;
+  bool get isCapturing => _timer != null;
 
   @override
-  Stream<AudioSample> get samples =>
-      _controller?.stream ?? const Stream<AudioSample>.empty();
+  Stream<AudioSample> get samples => _controller.stream;
 
   @override
   Future<void> start() async {
-    if (isCapturing) return;
-    // Broadcast so close() completes even when nothing ever listened; a
-    // single-subscription controller would hang teardown forever.
-    final controller = StreamController<AudioSample>.broadcast();
-    _controller = controller;
-    Timer.periodic(interval, (_) {
-      if (controller.isClosed) return;
+    if (isCapturing || _disposed) return;
+    _timer = Timer.periodic(interval, (_) {
       _tick++;
       // A small deterministic wobble so the floor estimator sees a realistic
       // signal rather than a perfectly flat line.
       final wobble = (_tick % 7) * 0.002;
-      controller.add(AudioSample(
+      _controller.add(AudioSample(
         amplitude: (ambientLevel + wobble).clamp(0.0, 1.0),
         capturedAt: DateTime.now(),
       ));
@@ -135,11 +138,18 @@ class SimulatedAudioCaptureSource implements AudioCaptureSource {
 
   @override
   Future<void> stop() async {
-    final controller = _controller;
-    _controller = null;
-    await controller?.close();
+    // The sampler must stop with the source. Leaving the periodic timer alive
+    // keeps a 20ms tick running for the life of the process after the screen
+    // that owned it is gone.
+    _timer?.cancel();
+    _timer = null;
   }
 
   @override
-  Future<void> dispose() => stop();
+  Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
+    await stop();
+    await _controller.close();
+  }
 }

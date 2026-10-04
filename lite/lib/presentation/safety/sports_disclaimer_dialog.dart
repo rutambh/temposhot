@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
 
 class SportsDisclaimerDialog extends StatelessWidget {
   final VoidCallback onAccept;
@@ -8,11 +8,12 @@ class SportsDisclaimerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Dialog(
-      backgroundColor: AppColors.blackCard,
+      backgroundColor: tokens.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.olive, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: tokens.border, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -20,34 +21,27 @@ class SportsDisclaimerDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.shield_outlined, color: AppColors.blaze, size: 28),
-                SizedBox(width: 10),
+                Icon(Icons.shield_outlined, color: tokens.primary, size: 28),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Sports Safety Disclaimer',
-                    style: TextStyle(
-                      color: AppColors.paper,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Sports safety disclaimer',
+                    style: tokens.body(
+                        color: tokens.text, size: 18, weight: FontWeight.w700),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'TempoShot is an offline acoustic sports timer designed exclusively for competitive practical shooting (USPSA/IDPA) and dry-fire par practice.\n\n'
               '• Always observe the 4 Universal Firearm Safety Rules.\n'
               '• Wear certified eye and hearing protection during all live-fire training.\n'
               '• TempoShot does not connect to any firearm hardware or store location/firearm data.\n'
-              '• 100% Offline & Private: Zero telemetry, zero cloud.',
-              style: TextStyle(
-                color: AppColors.paperMuted,
-                fontSize: 14,
-                height: 1.45,
-              ),
+              '• 100% offline & private: zero telemetry, zero cloud.',
+              style: tokens.body(color: tokens.textMuted, size: 14, height: 1.45),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -55,9 +49,10 @@ class SportsDisclaimerDialog extends StatelessWidget {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blaze,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: tokens.primary,
+                  foregroundColor: tokens.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: onAccept,
                 child: const Text(

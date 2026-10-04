@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
 import '../../core/widgets/3d/audio_envelope_oscilloscope_3d.dart';
 import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
 import '../../core/widgets/3d/tactile_pusher_button_3d.dart';
 import '../../core/widgets/3d/tactile_timer_chassis_3d.dart';
+import '../../core/widgets/paper_card.dart';
 import '../../domain/engine/shot_detection_engine.dart';
 import '../../data/datasources/audio_capture_source.dart';
 import '../../domain/models/shot_string.dart';
@@ -142,6 +143,7 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     // ref.watch, not ref.read: an autoDispose provider with no listener is
     // torn down on the next frame, which would release the microphone while
     // the timer is still running. Watching here ties both to this screen.
@@ -152,26 +154,34 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
     final lastSplit = shots.isNotEmpty ? shots.last.splitTimeSec : 0.0;
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      // Transparent so the app shell's dot-grid paper reads through.
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.paper),
+          icon: Icon(Icons.close, color: tokens.text),
           onPressed: () {
             _engine.stopSession();
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Live-Fire Session', style: TextStyle(color: AppColors.paper)),
+        title: Text(
+          'Live-fire session',
+          style: tokens.body(
+            color: tokens.text,
+            size: 17,
+            weight: FontWeight.w700,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
           child: Column(
             children: [
-              // 3D Chrono Chassis & Backlit LCD
               TactileTimerChassis3D(
+                padding: 12,
                 child: Column(
                   children: [
                     BacklitLcdDisplay3D(
@@ -181,133 +191,193 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
                       isArmed: _engine.isArmed,
                       isRunning: _engine.isRunning,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     AudioEnvelopeOscilloscope3D(
                       waveSamples: _waveBuffer,
                       threshold: widget.sensitivity,
-                      height: 80,
+                      height: 72,
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-              // Tap Trigger Shot Pusher (for manual or test use)
+              // Manual shot trigger, for dry runs and for a string the mic
+              // missed. Only present once the timer is actually running.
               if (_engine.isRunning)
                 TactilePusherButton3D(
                   onPressed: _triggerSimulatedShot,
                   label: 'RECORD SHOT BREAK',
                   icon: Icons.adjust,
-                  backgroundColor: AppColors.oliveLight,
-                  textColor: AppColors.black,
-                  height: 56,
+                  backgroundColor: tokens.accent,
+                  textColor: tokens.onPrimary,
+                  height: 52,
                   fontSize: 15,
                 ),
 
-              const SizedBox(height: 12),
+              if (_engine.isRunning) const SizedBox(height: 12),
 
-              // Live Splits Table
+              // The splits table -- the actual written record of the string.
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.blackCard,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.olive.withAlpha(70)),
-                  ),
+                child: PaperCard(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Row(
                         children: [
-                          Text('SHOT #', style: TextStyle(color: AppColors.paperMuted, fontWeight: FontWeight.bold, fontSize: 11)),
-                          Text('SPLIT TIME', style: TextStyle(color: AppColors.paperMuted, fontWeight: FontWeight.bold, fontSize: 11)),
-                          Text('CUMULATIVE', style: TextStyle(color: AppColors.paperMuted, fontWeight: FontWeight.bold, fontSize: 11)),
+                          Expanded(
+                            child: Text(
+                              'SHOT #',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: tokens.label(color: tokens.textMuted, size: 10),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'SPLIT',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: tokens.label(color: tokens.textMuted, size: 10),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'CUMULATIVE',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: tokens.label(color: tokens.textMuted, size: 10),
+                            ),
+                          ),
                         ],
                       ),
-                      const Divider(color: AppColors.olive, height: 16),
+                      Divider(color: tokens.border, height: 12),
                       Expanded(
                         child: _captureUnavailableReason != null
-                            ? Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.mic_off_outlined,
-                                        color: AppColors.blazeBright, size: 32),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      _captureUnavailableReason!,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: AppColors.blazeBright,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    const Text(
-                                      'Shots must be recorded manually below.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: AppColors.paperMuted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
+                            ? _CaptureUnavailable(reason: _captureUnavailableReason!)
                             : shots.isEmpty
-                            ? Center(
-                                child: Text(
-                                  _engine.isArmed
-                                      ? 'STANDBY FOR START BEEP...'
-                                      : 'Listening for shot breaks...',
-                                  style: TextStyle(
-                                    color: _engine.isArmed ? AppColors.blazeBright : AppColors.paperMuted,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: shots.length,
-                                itemBuilder: (context, idx) {
-                                  final s = shots[idx];
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text('#${s.shotNumber}', style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                                        Text('+${s.splitTimeSec.toStringAsFixed(2)}s', style: const TextStyle(color: AppColors.lcdAmberText, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                                        Text('${s.cumulativeTimeSec.toStringAsFixed(2)}s', style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                                      ],
+                                ? Center(
+                                    child: Text(
+                                      _engine.isArmed
+                                          ? 'Standby for the start beep.'
+                                          : 'Listening for shot breaks.',
+                                      textAlign: TextAlign.center,
+                                      style: tokens.body(
+                                        color: _engine.isArmed
+                                            ? tokens.primary
+                                            : tokens.textMuted,
+                                        size: 13,
+                                        weight: FontWeight.w600,
+                                      ).copyWith(fontFamily: tokens.readoutFontFamily),
                                     ),
-                                  );
-                                },
-                              ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: shots.length,
+                                    itemBuilder: (context, idx) {
+                                      final s = shots[idx];
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 5),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                '#${s.shotNumber}',
+                                                maxLines: 1,
+                                                style: tokens.readout(
+                                                  color: tokens.text,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                '+${s.splitTimeSec.toStringAsFixed(2)}s',
+                                                maxLines: 1,
+                                                textAlign: TextAlign.right,
+                                                style: tokens.readout(
+                                                  color: tokens.warning,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                '${s.cumulativeTimeSec.toStringAsFixed(2)}s',
+                                                maxLines: 1,
+                                                textAlign: TextAlign.right,
+                                                style: tokens.readout(
+                                                  color: tokens.text,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-              // Stop & Review Button
               TactilePusherButton3D(
                 onPressed: _stopAndReview,
                 label: 'STOP & REVIEW STRING',
                 icon: Icons.stop_circle,
-                backgroundColor: AppColors.blaze,
-                height: 64,
+                backgroundColor: tokens.primary,
+                textColor: tokens.onPrimary,
+                height: 58,
               ),
-              const SizedBox(height: 8),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown in place of the splits table when the microphone cannot run.
+/// Says what failed and what to do instead -- no silent blank panel.
+class _CaptureUnavailable extends StatelessWidget {
+  const _CaptureUnavailable({required this.reason});
+
+  final String reason;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.mic_off_outlined, color: tokens.accent, size: 30),
+            const SizedBox(height: 10),
+            Text(
+              reason,
+              textAlign: TextAlign.center,
+              style: tokens.body(
+                color: tokens.text,
+                size: 14,
+                weight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Record shots manually with the button above.',
+              textAlign: TextAlign.center,
+              style: tokens.body(color: tokens.textMuted, size: 12),
+            ),
+          ],
         ),
       ),
     );

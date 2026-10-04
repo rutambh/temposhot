@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
+import '../../core/widgets/paper_card.dart';
 import '../paywall/pro_paywall_screen.dart';
 import '../providers/app_providers.dart';
 
@@ -11,19 +12,23 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = FieldNotebookTheme.of(context);
     final stringsAsync = ref.watch(allStringsProvider);
     final countAsync = ref.watch(stringCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.paper),
+          icon: Icon(Icons.arrow_back, color: tokens.text),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('String Logbook', style: TextStyle(color: AppColors.paper)),
+        title: Text(
+          'String logbook',
+          style: tokens.body(color: tokens.text, size: 17, weight: FontWeight.w700),
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -31,7 +36,11 @@ class HistoryScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const ProPaywallScreen()),
               );
             },
-            child: const Text('Upgrade Pro', style: TextStyle(color: AppColors.blazeBright, fontWeight: FontWeight.bold)),
+            child: Text(
+              'Upgrade Pro',
+              style: TextStyle(
+                  color: tokens.primary, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -40,25 +49,23 @@ class HistoryScreen extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           children: [
             countAsync.when(
-              data: (count) => Container(
-                padding: const EdgeInsets.all(14),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.blackCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.olive.withAlpha(60)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.storage, color: AppColors.blaze, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Lite Storage: $count / ${AppConstants.liteMaxStrings} Strings',
-                        style: const TextStyle(color: AppColors.paper, fontSize: 13, fontWeight: FontWeight.bold),
+              data: (count) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: PaperCard(
+                  padding: const EdgeInsets.all(13),
+                  child: Row(
+                    children: [
+                      Icon(Icons.storage, color: tokens.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Lite storage: $count / ${AppConstants.liteMaxStrings} strings',
+                          style: tokens.body(
+                              color: tokens.text, size: 13, weight: FontWeight.w700),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               loading: () => const SizedBox(),
@@ -68,26 +75,23 @@ class HistoryScreen extends ConsumerWidget {
             stringsAsync.when(
               data: (strings) {
                 if (strings.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: AppColors.blackCard,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.olive.withAlpha(50)),
-                    ),
-                    child: const Column(
+                  // Composed empty state, not a blank panel.
+                  return PaperCard(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                    child: Column(
                       children: [
-                        Icon(Icons.timer_outlined, color: AppColors.paperMuted, size: 48),
-                        SizedBox(height: 12),
+                        Icon(Icons.timer_outlined, color: tokens.accent, size: 40),
+                        const SizedBox(height: 12),
                         Text(
-                          'No Recorded Strings Yet',
-                          style: TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontSize: 16),
+                          'No strings logged yet',
+                          style: tokens.body(
+                              color: tokens.text, size: 16, weight: FontWeight.w700),
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
-                          'Start a live-fire or dry-fire session to record splits.',
+                          'Run a live-fire or dry-fire session and the splits will be written here.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.paperMuted, fontSize: 13),
+                          style: tokens.body(color: tokens.textMuted, size: 13),
                         ),
                       ],
                     ),
@@ -99,46 +103,50 @@ class HistoryScreen extends ConsumerWidget {
                     final dt = DateTime.tryParse(s.timestamp) ?? DateTime.now();
                     final dateStr = DateFormat('MMM d, HH:mm').format(dt);
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.blackCard,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.olive.withAlpha(60)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                dateStr,
-                                style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                              Text(
-                                '${s.totalTimeSec.toStringAsFixed(2)}s',
-                                style: const TextStyle(color: AppColors.blazeBright, fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'monospace'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              _buildPill('Draw: ${s.firstShotDelaySec.toStringAsFixed(2)}s', AppColors.lcdAmberText),
-                              const SizedBox(width: 8),
-                              _buildPill('100% Offline', AppColors.oliveLight),
-                            ],
-                          ),
-                        ],
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: PaperCard(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    dateStr,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: tokens.body(color: tokens.text,
+                                        size: 15, weight: FontWeight.w700),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${s.totalTimeSec.toStringAsFixed(2)}s',
+                                  style: tokens.readout(
+                                      color: tokens.primary, size: 19),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                _buildPill('Draw: ${s.firstShotDelaySec.toStringAsFixed(2)}s',
+                                    tokens.warning),
+                                const SizedBox(width: 8),
+                                _buildPill('100% offline', tokens.textMuted),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.blaze)),
-              error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.blaze))),
+              loading: () => Center(child: CircularProgressIndicator(color: tokens.primary)),
+              error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: tokens.primary))),
             ),
           ],
         ),

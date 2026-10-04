@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/field_notebook_theme.dart';
 
+/// The chassis the timer sits in. Style 9 treats it as a clipboard, not a
+/// plastic housing: paper surface, hairline edge, one soft shadow, and
+/// registration bolts in the corners to keep the printed-page character.
 class TactileTimerChassis3D extends StatelessWidget {
   final Widget child;
   final double padding;
@@ -13,76 +16,50 @@ class TactileTimerChassis3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.blackCard,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: AppColors.olive.withAlpha(90),
-          width: 2.0,
-        ),
+        color: tokens.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tokens.border),
         boxShadow: [
-          // Deep Ground 3D Shadow
           BoxShadow(
-            color: Colors.black.withAlpha(240),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-          // Top-Light Specular Highlight
-          BoxShadow(
-            color: Colors.white.withAlpha(18),
-            blurRadius: 2,
-            offset: const Offset(0, -1.5),
+            color: tokens.brightness == Brightness.dark
+                ? const Color(0xFF000000).withValues(alpha: 0.34)
+                : const Color(0xFF2A2A1A).withValues(alpha: 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Main Body Padding
           Padding(
             padding: EdgeInsets.all(padding),
             child: child,
           ),
-          // 4 Corner Tactile Hex Bolts for Skeuomorphic Rugged Look
-          const Positioned(top: 10, left: 10, child: _HexBolt()),
-          const Positioned(top: 10, right: 10, child: _HexBolt()),
-          const Positioned(bottom: 10, left: 10, child: _HexBolt()),
-          const Positioned(bottom: 10, right: 10, child: _HexBolt()),
+          const Positioned(top: 7, left: 7, child: _RegistrationBolt()),
+          const Positioned(top: 7, right: 7, child: _RegistrationBolt()),
+          const Positioned(bottom: 7, left: 7, child: _RegistrationBolt()),
+          const Positioned(bottom: 7, right: 7, child: _RegistrationBolt()),
         ],
       ),
     );
   }
 }
 
-class _HexBolt extends StatelessWidget {
-  const _HexBolt();
+class _RegistrationBolt extends StatelessWidget {
+  const _RegistrationBolt();
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     return Container(
-      width: 10,
-      height: 10,
+      width: 7,
+      height: 7,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.steelDark,
-        border: Border.all(color: AppColors.steel.withAlpha(120), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(180),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: 3,
-          height: 3,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.black,
-          ),
-        ),
+        color: tokens.border,
       ),
     );
   }

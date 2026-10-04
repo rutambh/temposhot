@@ -76,9 +76,19 @@ class MicrophoneAudioCaptureSource implements AudioCaptureSource {
 
   final MicrophoneRecorder _recorder;
 
-  StreamController<AudioSample>? _out;
+  /// Long-lived and created eagerly, so [samples] is the same stream object
+  /// before and after [start]. Creating it inside start() meant a listener
+  /// that subscribed first -- which is exactly what the live timer does --
+  /// ended up on a dead `Stream.empty()` and never saw a single sample.
+  ///
+  /// Broadcast, so its close() completes even if nothing ever listened; a
+  /// single-subscription close() would hang teardown forever.
+  final StreamController<AudioSample> _out =
+      StreamController<AudioSample>.broadcast();
+
   StreamSubscription<List<double>>? _subscription;
   String? _unavailableReason;
+  bool _disposed = false;
 
   @override
   bool get isAvailable => _unavailableReason == null;
@@ -90,12 +100,11 @@ class MicrophoneAudioCaptureSource implements AudioCaptureSource {
   bool get isCapturing => _subscription != null;
 
   @override
-  Stream<AudioSample> get samples =>
-      _out?.stream ?? const Stream<AudioSample>.empty();
+  Stream<AudioSample> get samples => _out.stream;
 
   @override
   Future<void> start() async {
-    if (isCapturing) return;
+    if (isCapturing || _disposed) return;
 
     final granted = await _recorder.requestPermission();
     if (!granted) {
@@ -103,33 +112,39 @@ class MicrophoneAudioCaptureSource implements AudioCaptureSource {
       return;
     }
 
-    // Broadcast: a live capture stream has no late-subscriber buffering
-    // requirement, and its close() completes even if nothing ever listened.
-    // A single-subscription close() would hang teardown forever.
-    final controller = StreamController<AudioSample>.broadcast();
-    _out = controller;
-    final pcm = await _recorder.startPcmStream();
-    _subscription = pcm.listen(
-      (block) => controller.add(sampleFromPcm(block)),
-      onError: (Object error) {
-        _unavailableReason = 'Microphone capture failed: $error';
-      },
-      onDone: () => controller.close(),
-    );
+    try {
+      final pcm = await _recorder.startPcmStream();
+      _subscription = pcm.listen(
+        (block) => _out.add(sampleFromPcm(block)),
+        onError: (Object error) {
+          _unavailableReason = 'Microphone capture failed: $error';
+        },
+        // The plugin's stream ending is a capture failure, not a normal close:
+        // say so instead of silently going quiet mid-string.
+        onDone: () {
+          if (!_disposed) {
+            _unavailableReason = 'Microphone capture ended unexpectedly.';
+          }
+        },
+      );
+    } on Object catch (error) {
+      _unavailableReason = 'Microphone capture failed: $error';
+    }
   }
 
   @override
   Future<void> stop() async {
     await _subscription?.cancel();
     _subscription = null;
-    await _out?.close();
-    _out = null;
     await _recorder.stop();
   }
 
   @override
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     await stop();
+    await _out.close();
     await _recorder.dispose();
   }
 }

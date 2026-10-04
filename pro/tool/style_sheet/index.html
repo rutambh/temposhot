@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TempoShot — Style 9 Field Notebook Grid</title>
+<style>
+  :root {
+    /* Mirrors lib/core/theme/field_notebook_theme.dart light tokens. The Dart
+       file stays the source of truth; this only frames the screenshots. */
+    --paper: #F6F3EA;
+    --surface: #FCFAF4;
+    --grid: #DDD7C6;
+    --border: #DED8C7;
+    --ink: #2F4858;
+    --olive: #6B7355;
+    --text: #23221C;
+    --muted: #5A5B4E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 48px 32px 72px;
+    background-color: var(--paper);
+    background-image: radial-gradient(var(--grid) 1px, transparent 1px);
+    background-size: 16px 16px;
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header { max-width: 1180px; margin: 0 auto 40px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--olive); margin: 0 0 10px;
+  }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 44px; font-weight: 500; letter-spacing: -0.5px;
+    line-height: 1.08; margin: 0 0 14px; color: var(--ink);
+  }
+  .lede { max-width: 62ch; font-size: 16px; line-height: 1.55; color: var(--muted); margin: 0; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; padding: 0; list-style: none; }
+  .swatches li {
+    display: flex; align-items: center; gap: 8px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px;
+    font-size: 12px; font-weight: 600;
+  }
+  .chip { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 11px; color: var(--muted); font-weight: 400; }
+  main { max-width: 1180px; margin: 0 auto; }
+  h2 {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--olive); margin: 48px 0 4px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 + p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }
+  figure { margin: 0; }
+  .shot {
+    width: 100%; display: block; border-radius: 10px;
+    border: 1px solid var(--border); background: #fff;
+    box-shadow: 0 6px 18px rgba(42,42,26,.10);
+  }
+  figcaption { margin-top: 10px; font-size: 13px; font-weight: 600; }
+  figcaption span { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  footer { max-width: 1180px; margin: 64px auto 0; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; line-height: 1.6; }
+  code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <p class="eyebrow">TempoShot · design system</p>
+  <h1>Field Notebook Grid</h1>
+  <p class="lede">
+    Style 9 rendered for real: cream dot-grid paper, a serif readout face
+    (Newsreader) for every number, a single ink-blue action colour, and olive
+    reserved for status and limits. Both surfaces below are the actual app
+    screens at 390&nbsp;dp, produced by the widget-test renderer — not mockups.
+  </p>
+  <ul class="swatches">
+    <li><i class="chip" style="background:#F6F3EA"></i>paper <span class="mono">#F6F3EA</span></li>
+    <li><i class="chip" style="background:#FCFAF4"></i>surface <span class="mono">#FCFAF4</span></li>
+    <li><i class="chip" style="background:#DDD7C6"></i>grid <span class="mono">#DDD7C6</span></li>
+    <li><i class="chip" style="background:#2F4858"></i>ink <span class="mono">#2F4858</span></li>
+    <li><i class="chip" style="background:#6B7355"></i>olive <span class="mono">#6B7355</span></li>
+    <li><i class="chip" style="background:#23221C"></i>text <span class="mono">#23221C</span></li>
+  </ul>
+</header>
+
+<main>
+  <h2>Light</h2>
+  <p>Dot grid at 16&nbsp;dp. Cards are cream, hairline-bordered, one shadow tinted to the paper hue.</p>
+  <div class="grid">
+    <figure>
+      <img class="shot" src="dashboard-light.png" alt="Dashboard screen in light mode">
+      <figcaption>Dashboard<span>Chassis, readout panel, envelope trace, sensitivity card, storage card</span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" src="live-timer-light.png" alt="Live-fire timer in light mode">
+      <figcaption>Live-fire timer<span>Armed state, splits table, manual shot trigger</span></figcaption>
+    </figure>
+  </div>
+
+  <h2>Dark</h2>
+  <p>Lifted charcoal paper with softened sage, sparser 24&nbsp;dp grid. Designed separately, not inverted.</p>
+  <div class="grid">
+    <figure>
+      <img class="shot" src="dashboard-dark.png" alt="Dashboard screen in dark mode">
+      <figcaption>Dashboard, dark<span>Same layout, its own palette</span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" src="live-timer-dark.png" alt="Live-fire timer in dark mode">
+      <figcaption>Live-fire timer, dark<span>Readout and splits stay legible against the dark paper</span></figcaption>
+    </figure>
+  </div>
+</main>
+
+<footer>
+  Rendered by <code>test/theme/style_sheet_renderer_test.dart</code> from
+  <code>tool/style_sheet/index.html</code>, with the real bundled TTFs loaded.
+  Regenerate with <code>flutter test test/theme/style_sheet_renderer_test.dart</code>;
+  output lands in <code>build/style-sheet/sheet.html</code>.
+</footer>
+</body>
+</html>

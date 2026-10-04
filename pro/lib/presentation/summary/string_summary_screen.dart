@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/field_notebook_theme.dart';
+import '../../core/widgets/paper_card.dart';
 import '../../domain/models/shot_record.dart';
 import '../../domain/models/shot_string.dart';
 import '../providers/app_providers.dart';
@@ -52,6 +53,7 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = FieldNotebookTheme.of(context);
     final totalTime = _currentShots.isNotEmpty ? _currentShots.last.cumulativeTimeSec : 0.0;
     final firstShot = _currentShots.isNotEmpty ? _currentShots.first.cumulativeTimeSec : 0.0;
 
@@ -64,15 +66,18 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Practice String Summary', style: TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold)),
+        title: Text(
+          'String summary',
+          style: tokens.body(color: tokens.text, size: 17, weight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share, color: AppColors.paper),
+            icon: Icon(Icons.share, color: tokens.text),
             tooltip: 'Share String',
             onPressed: () {
               final text = 'TempoShot String:\nTotal: ${totalTime.toStringAsFixed(2)}s\nShots: ${_currentShots.length}\nFirst Shot: ${firstShot.toStringAsFixed(2)}s\nFastest Split: ${fastestSplit.toStringAsFixed(2)}s';
@@ -87,41 +92,39 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
           child: Column(
             children: [
               // Top Scorecard Box
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.blackCard,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: AppColors.olive.withAlpha(80), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(200),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+              PaperCard(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TOTAL STRING TIME', style: TextStyle(color: AppColors.paperMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                    const SizedBox(height: 6),
                     Text(
-                      '${totalTime.toStringAsFixed(2)}s',
-                      style: const TextStyle(
-                        color: AppColors.blazeBright,
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'monospace',
+                      'TOTAL STRING TIME',
+                      style: tokens.label(color: tokens.textMuted),
+                    ),
+                    const SizedBox(height: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${totalTime.toStringAsFixed(2)}s',
+                        style: tokens.readout(
+                          color: tokens.primary,
+                          size: 52,
+                          weight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildMetricCol('FIRST SHOT', '${firstShot.toStringAsFixed(2)}s'),
-                        _buildMetricCol('FASTEST SPLIT', '${fastestSplit.toStringAsFixed(2)}s'),
-                        _buildMetricCol('AVG SPLIT', '${avgSplit.toStringAsFixed(2)}s'),
-                        _buildMetricCol('SHOTS', '${_currentShots.length}'),
+                        _buildMetricCol(
+                            tokens, 'FIRST SHOT', '${firstShot.toStringAsFixed(2)}s'),
+                        _buildMetricCol(
+                            tokens, 'FASTEST SPLIT', '${fastestSplit.toStringAsFixed(2)}s'),
+                        _buildMetricCol(
+                            tokens, 'AVG SPLIT', '${avgSplit.toStringAsFixed(2)}s'),
+                        _buildMetricCol(
+                            tokens, 'SHOTS', '${_currentShots.length}'),
                       ],
                     ),
                   ],
@@ -132,21 +135,17 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
 
               // Split Breakdown List with Errant Shot Deletion
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.blackCard,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.olive.withAlpha(60)),
-                  ),
+                child: PaperCard(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'SHOT BREAKDOWN (Tap trash icon to remove errant echo)',
-                        style: TextStyle(color: AppColors.paperMuted, fontSize: 11, fontWeight: FontWeight.bold),
+                      Text(
+                        'SHOT BREAKDOWN — TAP TRASH TO DROP AN ERRANT ECHO',
+                        maxLines: 2,
+                        style: tokens.label(color: tokens.textMuted, size: 10),
                       ),
-                      const Divider(color: AppColors.olive, height: 16),
+                      Divider(color: tokens.border, height: 14),
                       Expanded(
                         child: ListView.builder(
                           itemCount: _currentShots.length,
@@ -156,15 +155,36 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
-                                  Text('#${s.shotNumber}', style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontFamily: 'monospace', fontSize: 15)),
-                                  const SizedBox(width: 16),
-                                  Text('Split: +${s.splitTimeSec.toStringAsFixed(2)}s', style: const TextStyle(color: AppColors.lcdAmberText, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                                  const Spacer(),
-                                  Text('${s.cumulativeTimeSec.toStringAsFixed(2)}s', style: const TextStyle(color: AppColors.paper, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 26,
+                                    child: Text(
+                                      '#${s.shotNumber}',
+                                      style: tokens.readout(color: tokens.text, size: 14),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      '+${s.splitTimeSec.toStringAsFixed(2)}s',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: tokens.readout(color: tokens.warning, size: 14),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  SizedBox(
+                                    width: 56,
+                                    child: Text(
+                                      '${s.cumulativeTimeSec.toStringAsFixed(2)}s',
+                                      maxLines: 1,
+                                      textAlign: TextAlign.right,
+                                      style: tokens.readout(color: tokens.text, size: 14),
+                                    ),
+                                  ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: AppColors.oliveLight, size: 20),
+                                    icon: Icon(Icons.delete_outline,
+                                        color: tokens.textMuted, size: 20),
                                     tooltip: 'Delete Errant Shot',
+                                    visualDensity: VisualDensity.compact,
                                     onPressed: () => _deleteShot(idx),
                                   ),
                                 ],
@@ -188,9 +208,10 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
                   icon: const Icon(Icons.check, size: 24),
                   label: const Text('Save String to Logbook', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blaze,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    backgroundColor: tokens.primary,
+                    foregroundColor: tokens.onPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () async {
                     final db = ref.read(tempoDatabaseProvider);
@@ -216,13 +237,31 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
     );
   }
 
-  Widget _buildMetricCol(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.paperMuted, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: AppColors.paper, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
-      ],
+  /// One figure in the scorecard row. Equal-width columns so the four
+  /// numbers line up as a table rather than a ragged sentence.
+  Widget _buildMetricCol(FieldNotebookTokens tokens, String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style:
+                tokens.label(color: tokens.textMuted, size: 9, letterSpacing: 0.6),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: tokens.readout(color: tokens.text, size: 16),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
