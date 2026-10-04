@@ -2,14 +2,23 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import '../../core/constants/app_constants.dart';
+import '../audio/noise_floor_estimator.dart';
 import '../models/shot_record.dart';
 
 class ShotDetectionEngine {
+  /// Fixed threshold used when no [noiseFloor] estimator is supplied.
   double sensitivityThreshold;
   double minSplitLockoutSec;
 
+  /// When set, detection uses an adaptive threshold relative to the measured
+  /// room noise instead of [sensitivityThreshold].
+  final NoiseFloorEstimator? noiseFloor;
+
+  /// Injectable so timing is deterministic under test.
+  final DateTime Function() _clock;
+  final math.Random _random;
+
   final List<ShotRecord> _recordedShots = [];
-  DateTime? _armedTime;
   DateTime? _startBeepTime;
   Timer? _randomDelayTimer;
   bool _isArmed = false;
@@ -18,7 +27,15 @@ class ShotDetectionEngine {
   ShotDetectionEngine({
     this.sensitivityThreshold = AppConstants.defaultSensitivityThreshold,
     this.minSplitLockoutSec = AppConstants.minSplitLockoutSec,
-  });
+    this.noiseFloor,
+    DateTime Function()? clock,
+    math.Random? random,
+  })  : _clock = clock ?? DateTime.now,
+        _random = random ?? math.Random();
+
+  /// Amplitude a sample must reach to count as a shot right now.
+  double get detectionThreshold =>
+      noiseFloor?.threshold ?? sensitivityThreshold;
 
   List<ShotRecord> get recordedShots => List.unmodifiable(_recordedShots);
   bool get isArmed => _isArmed;
@@ -36,28 +53,32 @@ class ShotDetectionEngine {
     _recordedShots.clear();
     _isArmed = false;
     _isRunning = false;
-    _armedTime = null;
     _startBeepTime = null;
+    noiseFloor?.reset();
   }
 
-  /// Arm timer with randomized delay between 1.0s and 4.0s
+  /// Arm timer with randomized delay between 1.0s and 4.0s.
+  ///
+  /// [startDelay] overrides the random delay, which keeps arming deterministic
+  /// under test and lets the dry-fire flow use a fixed lead-in.
   void armTimer({
     required Function(double delaySec) onArmed,
     required VoidCallback onStartBeep,
+    Duration? startDelay,
   }) {
     resetSession();
     _isArmed = true;
-    _armedTime = DateTime.now();
 
-    final random = math.Random();
-    final delaySeconds = 1.0 + random.nextDouble() * 3.0; // 1.0 to 4.0s
+    final delaySeconds = startDelay != null
+        ? startDelay.inMilliseconds / 1000.0
+        : 1.0 + _random.nextDouble() * 3.0; // 1.0 to 4.0s
     onArmed(delaySeconds);
 
     _randomDelayTimer = Timer(Duration(milliseconds: (delaySeconds * 1000).round()), () {
       if (!_isArmed) return;
       _isArmed = false;
       _isRunning = true;
-      _startBeepTime = DateTime.now();
+      _startBeepTime = _clock();
       HapticFeedback.heavyImpact();
       onStartBeep();
     });
@@ -67,11 +88,13 @@ class ShotDetectionEngine {
   bool processAudioSample(double amplitudeNorm, {DateTime? eventTime}) {
     if (!_isRunning || _startBeepTime == null) return false;
 
-    final now = eventTime ?? DateTime.now();
+    final now = eventTime ?? _clock();
     final elapsedSec = now.difference(_startBeepTime!).inMicroseconds / 1000000.0;
 
-    // Check sensitivity threshold
-    if (amplitudeNorm < sensitivityThreshold) {
+    // Gate on the adaptive noise floor when one is configured; otherwise fall
+    // back to the fixed sensitivity threshold.
+    if (amplitudeNorm < detectionThreshold) {
+      noiseFloor?.addSample(amplitudeNorm);
       return false;
     }
 
@@ -104,7 +127,7 @@ class ShotDetectionEngine {
   /// Manually trigger shot (e.g. for testing or tap simulation)
   bool registerManualShot({double? customTimeSec}) {
     if (!_isRunning) return false;
-    final now = DateTime.now();
+    final now = _clock();
     final elapsedSec = customTimeSec ??
         (_startBeepTime != null
             ? (now.difference(_startBeepTime!).inMicroseconds / 1000000.0)
