@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:temposhot/core/widgets/3d/backlit_lcd_display_3d.dart';
+import 'package:temposhot_pro/core/widgets/3d/backlit_lcd_display_3d.dart';
 
 void main() {
   testWidgets('BacklitLcdDisplay3D renders 3D formatted digits and splits', (tester) async {
