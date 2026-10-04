@@ -35,6 +35,9 @@ abstract class AudioCaptureSource {
   Future<void> start();
 
   Future<void> stop();
+
+  /// Releases the underlying device. Safe to call more than once.
+  Future<void> dispose();
 }
 
 /// Shared conversion from raw PCM to a normalised RMS [AudioSample].
@@ -76,6 +79,9 @@ class UnavailableAudioCaptureSource implements AudioCaptureSource {
 
   @override
   Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 /// Deterministic synthetic source.
@@ -110,7 +116,9 @@ class SimulatedAudioCaptureSource implements AudioCaptureSource {
   @override
   Future<void> start() async {
     if (isCapturing) return;
-    final controller = StreamController<AudioSample>();
+    // Broadcast so close() completes even when nothing ever listened; a
+    // single-subscription controller would hang teardown forever.
+    final controller = StreamController<AudioSample>.broadcast();
     _controller = controller;
     Timer.periodic(interval, (_) {
       if (controller.isClosed) return;
@@ -131,4 +139,7 @@ class SimulatedAudioCaptureSource implements AudioCaptureSource {
     _controller = null;
     await controller?.close();
   }
+
+  @override
+  Future<void> dispose() => stop();
 }
