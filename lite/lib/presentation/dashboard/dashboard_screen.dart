@@ -25,7 +25,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final stringCountAsync = ref.watch(stringCountProvider);
-    final stringsAsync = ref.watch(allStringsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.black,
