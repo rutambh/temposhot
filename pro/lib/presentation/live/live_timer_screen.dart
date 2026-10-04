@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -8,6 +7,7 @@ import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
 import '../../core/widgets/3d/tactile_pusher_button_3d.dart';
 import '../../core/widgets/3d/tactile_timer_chassis_3d.dart';
 import '../../domain/engine/shot_detection_engine.dart';
+import '../../data/datasources/audio_capture_source.dart';
 import '../../domain/models/shot_string.dart';
 import '../providers/app_providers.dart';
 import '../summary/string_summary_screen.dart';
@@ -24,10 +24,13 @@ class LiveTimerScreen extends ConsumerStatefulWidget {
 class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
   late ShotDetectionEngine _engine;
   Timer? _renderTimer;
-  Timer? _waveSimulatorTimer;
+  StreamSubscription<AudioSample>? _audioSub;
 
   double _currentTimeSec = 0.0;
-  final List<double> _waveBuffer = List.generate(40, (_) => 0.05);
+  final List<double> _waveBuffer = List.generate(40, (_) => 0.0);
+
+  /// Set once capture has told us it cannot run, e.g. permission refused.
+  String? _captureUnavailableReason;
 
   @override
   void initState() {
@@ -48,6 +51,41 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
         }
       },
     );
+
+    // Open the microphone and feed captured loudness into the detector.
+    _listenForShots();
+  }
+
+  Future<void> _listenForShots() async {
+    final source = ref.read(audioCaptureSourceProvider);
+    // If capture already knows it cannot run -- permission refused, no mic --
+    // surface the reason instead of asking the device again.
+    if (!source.isAvailable) {
+      if (mounted) {
+        setState(() => _captureUnavailableReason = source.unavailableReason);
+      }
+      return;
+    }
+    _audioSub = source.samples.listen(_onAudioSample);
+    await source.start();
+    if (!mounted) return;
+    if (!source.isAvailable) {
+      // Refused while we were asking.
+      await _audioSub?.cancel();
+      _audioSub = null;
+      setState(() => _captureUnavailableReason = source.unavailableReason);
+    }
+  }
+
+  /// One captured audio block: drive the oscilloscope and try to detect a shot.
+  void _onAudioSample(AudioSample sample) {
+    if (!mounted) return;
+    setState(() {
+      _waveBuffer.removeAt(0);
+      _waveBuffer.add(sample.amplitude);
+      _engine.processAudioSample(sample.amplitude,
+          eventTime: sample.capturedAt);
+    });
   }
 
   void _startLiveTimerLoop() {
@@ -59,24 +97,12 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
         });
       }
     });
-
-    // Ambient audio envelope simulation for oscilloscope
-    _waveSimulatorTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
-      if (mounted) {
-        setState(() {
-          final random = math.Random();
-          final ambient = 0.05 + random.nextDouble() * 0.12;
-          _waveBuffer.removeAt(0);
-          _waveBuffer.add(ambient);
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
     _renderTimer?.cancel();
-    _waveSimulatorTimer?.cancel();
+    _audioSub?.cancel();
     _engine.stopSession();
     super.dispose();
   }
@@ -94,7 +120,7 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
 
   void _stopAndReview() {
     _renderTimer?.cancel();
-    _waveSimulatorTimer?.cancel();
+    _audioSub?.cancel();
     _engine.stopSession();
 
     final now = DateTime.now();
@@ -197,7 +223,37 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
                       ),
                       const Divider(color: AppColors.olive, height: 16),
                       Expanded(
-                        child: shots.isEmpty
+                        child: _captureUnavailableReason != null
+                            ? Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.mic_off_outlined,
+                                        color: AppColors.blazeBright, size: 32),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      _captureUnavailableReason!,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: AppColors.blazeBright,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      'Shots must be recorded manually below.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: AppColors.paperMuted,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : shots.isEmpty
                             ? Center(
                                 child: Text(
                                   _engine.isArmed

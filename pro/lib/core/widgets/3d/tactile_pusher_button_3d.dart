@@ -94,13 +94,16 @@ class _TactilePusherButton3DState extends State<TactilePusherButton3D> {
                 Icon(widget.icon, size: 26, color: widget.textColor),
                 const SizedBox(width: 8),
               ],
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: widget.textColor,
-                  fontSize: widget.fontSize,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+              Flexible(
+                child: Text(
+                  widget.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: widget.textColor,
+                    fontSize: widget.fontSize,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ],

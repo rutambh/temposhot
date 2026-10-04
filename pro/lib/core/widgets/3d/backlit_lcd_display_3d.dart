@@ -47,10 +47,11 @@ class BacklitLcdDisplay3D extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
+                  Flexible(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 8,
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
@@ -67,24 +68,35 @@ class BacklitLcdDisplay3D extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        isArmed ? 'ARMED (STANDBY)' : (isRunning ? 'LIVE TIMER' : 'READY'),
-                        style: TextStyle(
-                          color: isArmed ? AppColors.blazeBright : AppColors.paperMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                        Flexible(
+                          child: Text(
+                            isArmed ? 'ARMED (STANDBY)' : (isRunning ? 'LIVE TIMER' : 'READY'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isArmed ? AppColors.blazeBright : AppColors.paperMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'SHOTS: $shotCount',
+                        style: const TextStyle(
+                          color: AppColors.paper,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'monospace',
                         ),
                       ),
-                    ],
-                  ),
-                  Text(
-                    'SHOTS: $shotCount',
-                    style: const TextStyle(
-                      color: AppColors.paper,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'monospace',
                     ),
                   ),
                 ],
@@ -119,22 +131,32 @@ class BacklitLcdDisplay3D extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
-                    style: const TextStyle(
-                      color: AppColors.lcdAmberText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'monospace',
+                  Flexible(
+                    child: Text(
+                      'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.lcdAmberText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
-                  const Text(
-                    '100% OFFLINE DSP',
-                    style: TextStyle(
-                      color: AppColors.oliveLight,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+                  const SizedBox(width: 8),
+                  const Flexible(
+                    child: Text(
+                      '100% OFFLINE DSP',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: AppColors.oliveLight,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
                 ],
