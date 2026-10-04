@@ -20,14 +20,49 @@ import 'package:temposhot_pro/presentation/providers/app_providers.dart';
 /// which is gitignored, so the suite leaves no tracked artefacts.
 void main() {
   const outDir = 'build/style-sheet';
+  const fontDir = 'assets/fonts';
+
+  /// Checks that every asset the pubspec declares is really on disk, in both
+  /// directions. A typo in an asset path is invisible to `flutter analyze` and
+  /// would otherwise show up only as a runtime fallback to the system font.
+  test('the bundled fonts declared in pubspec exist and nothing is orphaned',
+      () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final declared = RegExp(r'asset:\s*(\S+\.ttf)')
+        .allMatches(pubspec)
+        .map((m) => m.group(1)!)
+        .toSet();
+
+    expect(declared, {'assets/fonts/Newsreader.ttf', 'assets/fonts/PublicSans.ttf'},
+        reason: 'the readout and body faces must both be declared');
+
+    for (final path in declared) {
+      expect(File(path).existsSync(), isTrue,
+          reason: '$path is declared in pubspec.yaml but is not on disk');
+      // A real TrueType file starts 0x00010000. A truncated copy or an HTML
+      // error page would not, and would fail to register as a font family.
+      final magic = File(path).readAsBytesSync().sublist(0, 4);
+      expect(magic, [0x00, 0x01, 0x00, 0x00],
+          reason: '$path is not a valid TrueType file');
+    }
+
+    final onDisk = Directory(fontDir)
+        .listSync()
+        .map((e) => '$fontDir/${e.path.split(Platform.pathSeparator).last}')
+        .toSet();
+    expect(onDisk, declared, reason: 'no font file may be left undeclared');
+  });
 
   /// flutter_test substitutes a placeholder font for every unstyled glyph, so
   /// without this the PNGs would be rows of boxes. The real TTFs are read
   /// straight off disk -- the app never fetches them.
   Future<void> loadRealFonts() async {
     for (final family in ['Newsreader', 'PublicSans']) {
-      final file = File('assets/fonts/$family.ttf');
-      if (!file.existsSync()) continue;
+      final file = File('$fontDir/$family.ttf');
+      // Hard failure, not a skip: silently falling back would produce a sheet
+      // that looks plausible but shows the wrong typeface.
+      expect(file.existsSync(), isTrue,
+          reason: '$family.ttf is required to render the style sheet');
       final loader = FontLoader(family)
         ..addFont(Future.value(file.readAsBytesSync().buffer.asByteData()));
       await loader.load();
