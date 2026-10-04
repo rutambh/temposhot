@@ -82,6 +82,7 @@ void main() {
 
     source.emit(0.9);
     await tester.pump();
+    await tester.pump();
 
     expect(find.text('#1'), findsOneWidget,
         reason: 'the captured gunshot must appear as shot #1');

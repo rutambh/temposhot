@@ -142,6 +142,12 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ref.watch, not ref.read: an autoDispose provider with no listener is
+    // torn down on the next frame, which would release the microphone while
+    // the timer is still running. Watching here ties both to this screen.
+    ref.watch(audioCaptureSourceProvider);
+    ref.watch(shotEngineProvider);
+
     final shots = _engine.recordedShots;
     final lastSplit = shots.isNotEmpty ? shots.last.splitTimeSec : 0.0;
 
