@@ -1,9 +1,10 @@
 .dart_tool/
 build/
+**/build/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-android/.gradle/
-android/local.properties
+**/android/.gradle/
+**/android/local.properties
 *.iml
 .freebuff/
