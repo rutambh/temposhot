@@ -38,7 +38,7 @@ everything outside them is yours.
 
 ## Project Snapshot
 Core idea (owner's words): "A dual-mode acoustic timer that acts as a firearms range shot timer (detecting gunshots/splits) and an ultra-precise metronome."
-Stack: Flutter (Dart 3.x) + record / audio stream + Drift / SQLite
+Stack: Flutter 3.44 (Dart 3.12) + record 7.1.1 + Riverpod 2.6.1 + sqflite 2.4.3 (no Drift)
 Run/build/test: `flutter run`, `flutter test`, `flutter build apk --target-platform android-arm64,android-x64 --split-per-abi --release`
 Out of scope: Cloud synchronization, network telemetry, accounts, medical diagnosis claims
 
@@ -54,14 +54,24 @@ Skills/MCPs/plugins/docs available for THIS project — one line each:
 | security-review | skill | Verifies Zero-Network guarantee and permission auditing |
 | tdd-workflow | skill | Test-driven development for sensor algorithms & calculations |
 | docs/INDEX.md | doc | Navigation hub for all project documentation — read first |
-| docs/product.md | doc | Product vision, domain rules, and user guides |
-| docs/architecture.md | doc | Layered architecture, folder structure, and module boundaries |
-| docs/permissions.md | doc | Android permissions matrix & Zero-Internet audit |
-| docs/ui.md | doc | 3D tactile design system, color tokens, and custom painters |
+| docs/overview.md | doc | What ships today vs what is only planned; verified stack |
+| docs/product.md | doc | How the app is used; what the paywall advertises but does not do |
+| docs/architecture.md | doc | Real directory tree, the capture → RMS → engine → provider path |
+| docs/structure/INDEX.md | doc | Module map and test map |
+| docs/permissions.md | doc | Android permission audit and Zero-Internet evidence |
+| docs/ui.md | doc | Field Notebook tokens, bundled typefaces, widget inventory, the two painters |
+| docs/api.md | doc | Microphone capture contract and resource lifecycle |
+| docs/database.md | doc | sqflite schema, Lite gating, what is not encrypted |
+| docs/environment.md | doc | Verified toolchain; what could not be tested on this machine |
+| docs/cicd.md | doc | Build commands, signing status, absence of CI |
+| docs/bugs.md | doc | Append-only bug log (BUG-01…BUG-07) |
+| docs/improvements.md | doc | Append-only open questions (IMP-01…IMP-08) |
 
 ## Lessons & Common Fixes
 - [build] Gradle daemon disappeared during high memory build -> stop daemon via `./gradlew --stop` before rebuilding -> build succeeds smoothly.
-- [sensor] Device lacking hardware sensor -> SensorGuardDialog informs user with graceful UI fallback instead of crash.
+- [docs] Docs drift from code silently -> every claim in `docs/` carries an evidence tag; re-derive against source before trusting it. See `docs/INDEX.md`.
+- [audio] A capture source that creates its output stream inside `start()` loses listeners that subscribe first — the live timer does. Keep the controller long-lived. See BUG-01.
+- [test] `RenderRepaintBoundary.toImage` hangs in `flutter test` unless wrapped in `tester.runAsync` — the fake async zone never drains the engine task runner.
 
 ## User Workstyle
 - Strict preference for evidence-based verification before assertions.
@@ -71,4 +81,5 @@ Skills/MCPs/plugins/docs available for THIS project — one line each:
 | Date | Task (plans/ folder) | Tracks | Status |
 |---|---|---|---|
 | 2026-09-02 | Initial release and docs setup | Docs, Protocol | Completed |
+| 2026-10-04 | Documentation correctness pass | Docs, Protocol | Completed |
 <!-- END: agents-work-protocol -->
