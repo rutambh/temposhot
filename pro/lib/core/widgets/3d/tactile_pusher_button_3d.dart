@@ -15,6 +15,10 @@ class TactilePusherButton3D extends StatefulWidget {
   final double height;
   final double fontSize;
 
+  /// Disabled buttons stay readable but cannot be tapped, which is clearer
+  /// than silently ignoring a tap while a par timer is armed or running.
+  final bool enabled;
+
   const TactilePusherButton3D({
     super.key,
     required this.onPressed,
@@ -24,6 +28,7 @@ class TactilePusherButton3D extends StatefulWidget {
     this.textColor = Colors.white,
     this.height = 64.0,
     this.fontSize = 17.0,
+    this.enabled = true,
   });
 
   @override
@@ -41,59 +46,71 @@ class _TactilePusherButton3DState extends State<TactilePusherButton3D> {
     final depth = _isPressed ? 0.0 : _travel;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
+      onTapDown:
+          widget.enabled ? (_) => setState(() => _isPressed = true) : null,
+      onTapUp:
+          widget.enabled
+              ? (_) {
+                setState(() => _isPressed = false);
+                widget.onPressed();
+              }
+              : null,
+      onTapCancel:
+          widget.enabled ? () => setState(() => _isPressed = false) : null,
+      child: AnimatedOpacity(
         duration: _duration,
-        height: widget.height,
-        transform: Matrix4.translationValues(0, _isPressed ? _travel : 0, 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: widget.backgroundColor,
-          border: Border.all(
-            color: widget.backgroundColor.withValues(alpha: 0.0),
-          ),
-          boxShadow: [
-            // Solid extrusion: the same hue, darkened, so the button looks
-            // pressed into the page rather than floating on it.
-            BoxShadow(
-              color: Color.lerp(widget.backgroundColor, Colors.black, 0.45)!
-                  .withValues(alpha: _isPressed ? 0.0 : 1.0),
-              blurRadius: 0,
-              offset: Offset(0, depth + 3),
+        opacity: widget.enabled ? 1.0 : 0.55,
+        child: AnimatedContainer(
+          duration: _duration,
+          height: widget.height,
+          transform: Matrix4.translationValues(0, _isPressed ? _travel : 0, 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: widget.backgroundColor,
+            border: Border.all(
+              color: widget.backgroundColor.withValues(alpha: 0.0),
             ),
-          ],
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.icon != null) ...[
-                  Icon(widget.icon, size: 22, color: widget.textColor),
-                  const SizedBox(width: 8),
-                ],
-                Flexible(
-                  child: Text(
-                    widget.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: widget.textColor,
-                      fontSize: widget.fontSize,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+            boxShadow: [
+              // Solid extrusion: the same hue, darkened, so the button looks
+              // pressed into the page rather than floating on it.
+              BoxShadow(
+                color: Color.lerp(
+                  widget.backgroundColor,
+                  Colors.black,
+                  0.45,
+                )!.withValues(alpha: _isPressed ? 0.0 : 1.0),
+                blurRadius: 0,
+                offset: Offset(0, depth + 3),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.icon != null) ...[
+                    Icon(widget.icon, size: 22, color: widget.textColor),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: widget.textColor,
+                        fontSize: widget.fontSize,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

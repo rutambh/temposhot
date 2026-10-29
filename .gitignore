@@ -8,3 +8,10 @@ build/
 **/android/local.properties
 *.iml
 .freebuff/
+.idea/
+.vscode/
+*.log
+.kotlin/
+**/android/.kotlin/
+
+

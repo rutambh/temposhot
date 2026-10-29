@@ -6,6 +6,7 @@ import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
 import '../../core/widgets/3d/tactile_pusher_button_3d.dart';
 import '../../core/widgets/3d/tactile_timer_chassis_3d.dart';
 import '../../core/widgets/paper_card.dart';
+import '../../core/widgets/theme_mode_button.dart';
 import '../dryfire/dryfire_par_screen.dart';
 import '../history/history_screen.dart';
 import '../live/live_timer_screen.dart';
@@ -14,7 +15,11 @@ import '../providers/app_providers.dart';
 import '../safety/sports_disclaimer_dialog.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.showStartupDisclaimer = true});
+
+  /// Shown once per app launch. Tests that render the dashboard on its own
+  /// pass false so the dialog does not cover the screen they are capturing.
+  final bool showStartupDisclaimer;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -22,6 +27,23 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   double _sensitivity = AppConstants.defaultSensitivityThreshold;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.showStartupDisclaimer) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => SportsDisclaimerDialog(
+          onAccept: () => Navigator.of(dialogContext).pop(),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +84,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         actions: [
+          const ThemeModeButton(),
           IconButton(
             icon: Icon(Icons.history, color: tokens.text),
             tooltip: 'String History',

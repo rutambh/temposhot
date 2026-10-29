@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:temposhot_pro/core/audio/cue_player.dart';
 import 'package:temposhot_pro/core/theme/field_notebook_theme.dart';
 import 'package:temposhot_pro/core/widgets/dot_grid_background.dart';
 import 'package:temposhot_pro/core/widgets/paper_card.dart';
@@ -11,6 +12,8 @@ import 'package:temposhot_pro/presentation/dashboard/dashboard_screen.dart';
 import 'package:temposhot_pro/presentation/live/live_timer_screen.dart';
 
 void main() {
+  CuePlayer.enabled = false;
+
   group('FieldNotebookTokens', () {
     test('light palette matches the chosen Style 9 values', () {
       const t = FieldNotebookTokens.light;
@@ -151,7 +154,9 @@ void main() {
       };
       addTearDown(() => FlutterError.onError = previous);
 
-      await tester.pumpWidget(app(const DashboardScreen()));
+      await tester.pumpWidget(
+        app(const DashboardScreen(showStartupDisclaimer: false)),
+      );
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(DashboardScreen), findsOneWidget);
@@ -218,7 +223,11 @@ void main() {
         tester.platformDispatcher.platformBrightnessTestValue = brightness;
         addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-        await tester.pumpWidget(const ProviderScope(child: TempoShotApp()));
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: TempoShotApp(showStartupDisclaimer: false),
+          ),
+        );
         await tester.pump();
 
         final shell =

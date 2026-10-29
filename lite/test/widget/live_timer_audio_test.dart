@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:temposhot/core/audio/cue_player.dart';
 import 'package:temposhot/data/datasources/audio_capture_source.dart';
 import 'package:temposhot/presentation/live/live_timer_screen.dart';
 import 'package:temposhot/presentation/providers/app_providers.dart';
@@ -58,6 +59,8 @@ Widget _app(AudioCaptureSource source) {
 }
 
 void main() {
+  CuePlayer.enabled = false;
+
   /// The live timer is a phone screen. The default 800x600 test surface
   /// squeezes the splits table to nothing, so tests run at phone dimensions.
   void usePhoneSurface(WidgetTester tester) {

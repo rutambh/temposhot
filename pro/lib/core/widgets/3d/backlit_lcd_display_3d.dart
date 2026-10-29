@@ -4,7 +4,7 @@ import '../../theme/field_notebook_theme.dart';
 /// The readout panel: a hairline-bordered inset on raised paper, with the
 /// serif Newsreader digits the Field Notebook style calls for.
 ///
-/// Class name kept from the old skeuomorphic build so the two call sites and
+/// Class name kept from the old skeuomorphic build so the call sites and
 /// their test do not churn; the treatment itself is now paper, not glass.
 class BacklitLcdDisplay3D extends StatelessWidget {
   final double timeSec;
@@ -13,6 +13,14 @@ class BacklitLcdDisplay3D extends StatelessWidget {
   final bool isArmed;
   final bool isRunning;
 
+  /// The dry-fire par timer has no shot count, so it can hide the counter
+  /// instead of showing a meaningless zero.
+  final bool showShotCounter;
+
+  /// Replaces the "SPLIT: …" footer when set. The par timer uses this to show
+  /// the target par time instead of a split it does not measure.
+  final String? footerText;
+
   const BacklitLcdDisplay3D({
     super.key,
     required this.timeSec,
@@ -20,6 +28,8 @@ class BacklitLcdDisplay3D extends StatelessWidget {
     required this.lastSplitSec,
     this.isArmed = false,
     this.isRunning = false,
+    this.showShotCounter = true,
+    this.footerText,
   });
 
   @override
@@ -39,10 +49,11 @@ class BacklitLcdDisplay3D extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Status line: what the timer is doing, written as a field label.
+          // Status line: what the timer is doing, written as a field label,
+          // with the shot count as a compact counter chip on the right.
           Row(
             children: [
-              Flexible(
+              Expanded(
                 child: Row(
                   children: [
                     Container(
@@ -67,21 +78,10 @@ class BacklitLcdDisplay3D extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'SHOTS: $shotCount',
-                    style: tokens.readout(
-                      color: tokens.text,
-                      size: 15,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+              if (showShotCounter) ...[
+                const SizedBox(width: 10),
+                _ShotCounter(count: shotCount, tokens: tokens),
+              ],
             ],
           ),
 
@@ -93,7 +93,11 @@ class BacklitLcdDisplay3D extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               timeFormatted,
-              style: tokens.readout(color: stateColor, size: 72, weight: FontWeight.w500),
+              style: tokens.readout(
+                color: stateColor,
+                size: 72,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
 
@@ -104,7 +108,8 @@ class BacklitLcdDisplay3D extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
+                  footerText ??
+                      'SPLIT: ${lastSplitSec > 0 ? '+${lastSplitSec.toStringAsFixed(2)}s' : '--'}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: tokens.readout(
@@ -125,6 +130,60 @@ class BacklitLcdDisplay3D extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small instrument badge rather than a sentence: label on the left, big
+/// tabular number on the right, with a brief scale/fade when it changes.
+class _ShotCounter extends StatelessWidget {
+  const _ShotCounter({required this.count, required this.tokens});
+
+  final int count;
+  final FieldNotebookTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: tokens.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: tokens.primary.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            'SHOTS',
+            style: tokens.label(
+              color: tokens.textMuted,
+              size: 9,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(width: 7),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder:
+                (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(scale: animation, child: child),
+                ),
+            child: Text(
+              '$count',
+              key: ValueKey(count),
+              style: tokens.readout(
+                color: tokens.primary,
+                size: 22,
+                weight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

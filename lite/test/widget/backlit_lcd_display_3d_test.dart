@@ -20,7 +20,8 @@ void main() {
 
     expect(find.byType(BacklitLcdDisplay3D), findsOneWidget);
     expect(find.text('03.45'), findsOneWidget);
-    expect(find.text('SHOTS: 6'), findsOneWidget);
+    expect(find.text('SHOTS'), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
     expect(find.text('SPLIT: +0.22s'), findsOneWidget);
   });
 }

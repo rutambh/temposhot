@@ -145,8 +145,56 @@ class HistoryScreen extends ConsumerWidget {
                   }).toList(),
                 );
               },
-              loading: () => Center(child: CircularProgressIndicator(color: tokens.primary)),
-              error: (err, _) => Center(child: Text('Error: $err', style: TextStyle(color: tokens.primary))),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: tokens.primary),
+              ),
+              error: (err, _) => PaperCard(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.storage_outlined,
+                            color: tokens.error, size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Logbook unavailable',
+                          style: tokens.body(
+                            color: tokens.text,
+                            size: 15,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'The local database could not be opened. Saved strings '
+                      'are safe on this device; try again, or restart the app '
+                      'if the problem continues.\n\n$err',
+                      style: tokens.body(color: tokens.textMuted, size: 12),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          ref.invalidate(allStringsProvider);
+                          ref.invalidate(stringCountProvider);
+                        },
+                        icon: Icon(Icons.refresh, color: tokens.primary),
+                        label: Text(
+                          'Retry',
+                          style: TextStyle(
+                            color: tokens.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

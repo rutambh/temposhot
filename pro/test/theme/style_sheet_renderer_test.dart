@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:temposhot_pro/core/audio/cue_player.dart';
 import 'package:temposhot_pro/core/theme/field_notebook_theme.dart';
 import 'package:temposhot_pro/data/datasources/audio_capture_source.dart';
 import 'package:temposhot_pro/main.dart';
@@ -19,6 +20,7 @@ import 'package:temposhot_pro/presentation/providers/app_providers.dart';
 /// Runs as part of `flutter test`. The output is deliberately in `build/`,
 /// which is gitignored, so the suite leaves no tracked artefacts.
 void main() {
+  CuePlayer.enabled = false;
   const outDir = 'build/style-sheet';
   const fontDir = 'assets/fonts';
 
@@ -131,7 +133,10 @@ void main() {
                 return source;
               }),
             ],
-            child: TempoShotApp(key: ValueKey(brightness.name)),
+            child: TempoShotApp(
+              key: ValueKey(brightness.name),
+              showStartupDisclaimer: false,
+            ),
           ),
         ),
       );

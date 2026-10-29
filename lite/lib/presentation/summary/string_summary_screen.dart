@@ -23,6 +23,8 @@ class StringSummaryScreen extends ConsumerStatefulWidget {
 
 class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
   late List<ShotRecord> _currentShots;
+  bool _isSaving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -51,6 +53,47 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
     }
   }
 
+  Future<void> _saveToLogbook() async {
+    if (_isSaving) return;
+
+    final totalTime =
+        _currentShots.isNotEmpty ? _currentShots.last.cumulativeTimeSec : 0.0;
+    final firstShot =
+        _currentShots.isNotEmpty ? _currentShots.first.cumulativeTimeSec : 0.0;
+
+    setState(() {
+      _isSaving = true;
+      _saveError = null;
+    });
+
+    try {
+      final db = ref.read(tempoDatabaseProvider);
+      final finalString = ShotString(
+        timestamp: widget.shotString.timestamp,
+        totalTimeSec: totalTime,
+        firstShotDelaySec: firstShot,
+      );
+      await db.insertStringWithShots(finalString, _currentShots);
+      ref.invalidate(allStringsProvider);
+      ref.invalidate(stringCountProvider);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('String saved to logbook')),
+      );
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _saveError = 'Could not save the string: $error';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = FieldNotebookTheme.of(context);
@@ -70,7 +113,11 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: tokens.text),
+          tooltip: 'Back to dashboard',
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+        ),
         title: Text(
           'String summary',
           style: tokens.body(color: tokens.text, size: 17, weight: FontWeight.w700),
@@ -198,6 +245,25 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
                 ),
               ),
 
+              if (_saveError != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: tokens.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: tokens.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    _saveError!,
+                    style: tokens.body(color: tokens.error, size: 12),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+
               const SizedBox(height: 16),
 
               // Save & Finish CTA
@@ -205,28 +271,35 @@ class _StringSummaryScreenState extends ConsumerState<StringSummaryScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check, size: 24),
-                  label: const Text('Save String to Logbook', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check, size: 24),
+                  label: Text(
+                    _isSaving ? 'Saving string…' : 'Save String to Logbook',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: tokens.primary,
                     foregroundColor: tokens.onPrimary,
+                    disabledBackgroundColor:
+                        tokens.primary.withValues(alpha: 0.55),
+                    disabledForegroundColor: tokens.onPrimary,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onPressed: () async {
-                    final db = ref.read(tempoDatabaseProvider);
-                    final finalString = ShotString(
-                      timestamp: widget.shotString.timestamp,
-                      totalTimeSec: totalTime,
-                      firstShotDelaySec: firstShot,
-                    );
-                    await db.insertStringWithShots(finalString, _currentShots);
-                    ref.invalidate(allStringsProvider);
-                    ref.invalidate(stringCountProvider);
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  },
+                  onPressed: _isSaving ? null : _saveToLogbook,
                 ),
               ),
               const SizedBox(height: 6),

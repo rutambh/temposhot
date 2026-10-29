@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/audio/cue_player.dart';
 import '../../core/theme/field_notebook_theme.dart';
 import '../../core/widgets/3d/audio_envelope_oscilloscope_3d.dart';
 import '../../core/widgets/3d/backlit_lcd_display_3d.dart';
@@ -26,6 +27,7 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
   late ShotDetectionEngine _engine;
   Timer? _renderTimer;
   StreamSubscription<AudioSample>? _audioSub;
+  final CuePlayer _cuePlayer = CuePlayer();
 
   double _currentTimeSec = 0.0;
   final List<double> _waveBuffer = List.generate(40, (_) => 0.0);
@@ -47,6 +49,7 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
       },
       onStartBeep: () {
         if (mounted) {
+          unawaited(_cuePlayer.beep());
           setState(() {});
           _startLiveTimerLoop();
         }
@@ -105,6 +108,7 @@ class _LiveTimerScreenState extends ConsumerState<LiveTimerScreen> {
     _renderTimer?.cancel();
     _audioSub?.cancel();
     _engine.stopSession();
+    unawaited(_cuePlayer.dispose());
     super.dispose();
   }
 
