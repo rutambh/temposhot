@@ -15,3 +15,8 @@ build/
 **/android/.kotlin/
 
 
+
+# CI/CD secrets
+cicd/secrets/
+.github-secrets-ready.txt
+
