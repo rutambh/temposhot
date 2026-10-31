@@ -4,7 +4,7 @@
 > **Package ID**: Lite: com.rutambh.temposhot | Pro: com.rutambh.temposhot.pro  
 > **GitHub Repo**: https://github.com/rutambh/temposhot  
 > **Platform**: Flutter  
-> **Target Track**: Google Play Internal Testing  
+> **Target Track**: Google Play Internal Testing (workflow: beta)  
 > **Play Store Created**: Yes (Configured for Lite & Pro)  
 > **Started**: $trackerDate  
 > **Status**: COMPLETED  

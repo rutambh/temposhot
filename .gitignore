@@ -20,3 +20,6 @@ build/
 cicd/secrets/
 .github-secrets-ready.txt
 
+test_desc.txt
+web/sqflite_sw.js
+web/sqlite3.wasm
