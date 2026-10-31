@@ -130,7 +130,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ matrix.package_name }}
           releaseFiles: ${{ matrix.output_dir }}/*.aab
-          track: beta
+          track: internal
           whatsNewDirectory: cicd/whatsnew
           status: completed
           changesNotSentForReview: false
